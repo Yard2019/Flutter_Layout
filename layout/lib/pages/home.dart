@@ -1,7 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:layout/pages/detail.dart';
+
+import 'package:http/http.dart' as http;
+import 'dart:async';
 
 class HomePage extends StatefulWidget {
   //const HomePage({ Key? key }) : super(key: key);
@@ -20,27 +22,50 @@ class _HomePageState extends State<HomePage> {
         body: Padding(
             padding: EdgeInsets.all(15),
             child: FutureBuilder(
-              builder: (context, snapshot) {
-                var data = json.decode(snapshot.data.toString());
-                return ListView.builder(
-                  itemBuilder: (BuildContext context, int index) {
-                    // return Card(
-                    //     child: ListTile(
-                    //   leading: FlutterLogo(),
-                    //   title: Text(data[index]['title']),
-                    //   onTap: () {
-                    //     print("Title: ${data[index]['title']} ");
-                    //   },
-                    // ));
-                    return MyBox(data[index]['title'], data[index]['subTitle'],
-                        data[index]['imgUrl'], data[index]['detail']);
-                  },
-                  itemCount: data.length,
-                );
-              },
-              future:
-                  DefaultAssetBundle.of(context).loadString('assets/data.json'),
-            )));
+                future: getdata(),
+                builder: (context, AsyncSnapshot snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    var data = snapshot.data;
+                    // var data = json.decode(snapshot.data.toString());
+                    return ListView.builder(
+                      itemBuilder: (BuildContext context, int index) {
+                        // return Card(
+                        //     child: ListTile(
+                        //   leading: FlutterLogo(),
+                        //   title: Text(data[index]['title']),
+                        //   onTap: () {
+                        //     print("Title: ${data[index]['title']} ");
+                        //   },
+                        // ));
+                        return MyBox(
+                            data[index]['title'],
+                            data[index]['subTitle'],
+                            data[index]['imgUrl'],
+                            data[index]['detail']);
+                      },
+                      itemCount: data.length,
+                    );
+                  }
+                  return LinearProgressIndicator();
+                }
+                // DefaultAssetBundle.of(context).loadString('assets/data.json'),
+                )));
+  }
+
+  Future getdata() async {
+    // https://raw.githubusercontent.com/Yard2019/Data_File/main/data.json
+    var url = Uri.https(
+        'raw.githubusercontent.com', '/Yard2019/Data_File/main/data.json');
+    var response = await http.get(url);
+    // var result = json.decode(response.body);
+    // return result;
+    // var result = '';
+    if (response.statusCode == 200) {
+      var result = json.decode(response.body);
+      return result;
+    } else {
+      throw Exception('Unable to fetch products from the REST API');
+    }
   }
 
   Widget MyBox(String title, String subTitle, String urlImg, String detail) {
